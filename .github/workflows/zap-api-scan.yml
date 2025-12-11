@@ -1,0 +1,45 @@
+name: ZAP API Scan (POST Requests + Auth Included)
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+
+jobs:
+  zap-api-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Fix workspace permissions
+        run: chmod -R 777 .
+
+      - name: Create output folder
+        run: mkdir -p zap-output && chmod 777 zap-output
+
+      - name: Run ZAP API Scan (POST + Auth)
+        run: |
+          docker run --rm \
+            -v "$(pwd)":/zap/wrk \
+            ghcr.io/zaproxy/zaproxy:stable \
+            python3 /zap/zap-api-scan.py \
+              -t "https://demo.testfire.net/swagger/properties.json" \
+              -f openapi \
+              -r /zap/wrk/zap-output/zap-report.html \
+              -J /zap/wrk/zap-output/zap-report.json \
+              -d \
+              -z "@/zap/wrk/auth-header.txt"
+
+      - name: Upload HTML Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-html-report
+          path: zap-output/zap-report.html
+
+      - name: Upload JSON Report
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-json-report
+          path: zap-output/zap-report.json
