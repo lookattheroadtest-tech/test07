@@ -1,4 +1,4 @@
-name: ZAP API Scan (Authenticated via Header)
+name: ZAP API Scan (Authenticated)
 
 on:
   workflow_dispatch:
@@ -10,36 +10,36 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      - name: Fix workspace permissions
+      - name: Fix permissions
         run: chmod -R 777 .
 
       - name: Create output folder
         run: mkdir -p zap-output && chmod 777 zap-output
 
-      - name: Run ZAP API Scan with custom header script
+      - name: Run ZAP API Scan with auth headers
         run: |
           docker run --rm \
             -v "$(pwd)":/zap/wrk \
-            -v "$(pwd)/zap-scripts:/zap/scripts" \
+            -v "$(pwd)/zap-scripts":/zap/scripts \
             ghcr.io/zaproxy/zaproxy:stable \
             python3 /zap/zap-api-scan.py \
               -t "https://demo.testfire.net/swagger/properties.json" \
               -f openapi \
-              -r /zap/wrk/zap-output/zap-report.html \
-              -J /zap/wrk/zap-output/zap-report.json \
+              --hook=/zap/scripts/auth-header.js \
               -d \
-              --hook=/zap/scripts/auth-header.js
+              -r /zap/wrk/zap-output/zap-report.html \
+              -J /zap/wrk/zap-output/zap-report.json
 
-      - name: Upload HTML Report
+      - name: Upload HTML report
         uses: actions/upload-artifact@v4
         with:
           name: zap-html-report
           path: zap-output/zap-report.html
 
-      - name: Upload JSON Report
+      - name: Upload JSON report
         uses: actions/upload-artifact@v4
         with:
           name: zap-json-report
