@@ -2,52 +2,27 @@ name: ZAP API Scan (Authenticated)
 
 on:
   workflow_dispatch:
-  push:
-  pull_request:
 
 jobs:
   zap-api-scan:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fix workspace permissions
-        run: chmod -R 777 .
+      - name: Run ZAP API Scan
+        uses: zaproxy/action-api-scan@v0.7.0
+        with:
+          target: "https://demo.testfire.net/swagger/v3/api-docs"
+          format: "openapi"
+          fail_action: false
+          rules_file_name: ""
+          cmd_options: >
+            -z "inject.header=Authorization: YW5OdGFYUm86WkdWdGJ6RXlNelE9Oj8DP1IWYC0="
+            -z "inject.header=Accept: application/json"
 
-      - name: Create output folder
-        run: mkdir -p zap-output && chmod 777 zap-output
-
-      - name: Ensure zap-scripts folder exists
-        run: mkdir -p zap-scripts
-
-      - name: List scripts for debugging
-        run: ls -R zap-scripts
-
-      - name: Run ZAP API Scan WITH Authentication Header
-        run: |
-          docker run --rm \
-            -v "$(pwd)":/zap/wrk \
-            -v "$(pwd)/zap-scripts":/zap/scripts \
-            ghcr.io/zaproxy/zaproxy:stable \
-            python3 /zap/zap-api-scan.py \
-              -t "https://demo.testfire.net/swagger/properties.json" \
-              -f openapi \
-              --hook=/zap/scripts/auth-header.py \
-              -I \
-              -d \
-              -r /zap/wrk/zap-output/zap-report.html \
-              -J /zap/wrk/zap-output/zap-report.json
-
-      - name: Upload HTML Report
+      - name: Upload ZAP Report
         uses: actions/upload-artifact@v4
         with:
-          name: zap-html-report
-          path: zap-output/zap-report.html
-
-      - name: Upload JSON Report
-        uses: actions/upload-artifact@v4
-        with:
-          name: zap-json-report
-          path: zap-output/zap-report.json
+          name: zap-report
+          path: zap-report.html
