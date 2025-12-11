@@ -22,8 +22,8 @@ jobs:
       - name: Ensure zap-scripts folder exists
         run: mkdir -p zap-scripts
 
-      - name: Copy auth-header.py into container scripts directory
-        run: cp zap-scripts/auth-header.py zap-scripts/auth-header.py
+      - name: List scripts for debugging
+        run: ls -R zap-scripts
 
       - name: Run ZAP API Scan WITH Authentication Header
         run: |
