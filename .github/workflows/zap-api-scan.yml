@@ -1,4 +1,4 @@
-name: ZAP API Scan (POST Requests + Auth Included)
+name: ZAP API Scan (Authenticated via Header)
 
 on:
   workflow_dispatch:
@@ -19,10 +19,11 @@ jobs:
       - name: Create output folder
         run: mkdir -p zap-output && chmod 777 zap-output
 
-      - name: Run ZAP API Scan (POST + Auth)
+      - name: Run ZAP API Scan with custom header script
         run: |
           docker run --rm \
             -v "$(pwd)":/zap/wrk \
+            -v "$(pwd)/zap-scripts:/zap/scripts" \
             ghcr.io/zaproxy/zaproxy:stable \
             python3 /zap/zap-api-scan.py \
               -t "https://demo.testfire.net/swagger/properties.json" \
@@ -30,7 +31,7 @@ jobs:
               -r /zap/wrk/zap-output/zap-report.html \
               -J /zap/wrk/zap-output/zap-report.json \
               -d \
-              -z "@/zap/wrk/auth-header.txt"
+              --hook=/zap/scripts/auth-header.js
 
       - name: Upload HTML Report
         uses: actions/upload-artifact@v4
