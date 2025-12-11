@@ -10,16 +10,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Fix permissions
+      - name: Fix workspace permissions
         run: chmod -R 777 .
 
       - name: Create output folder
         run: mkdir -p zap-output && chmod 777 zap-output
 
-      - name: Run ZAP API Scan with auth headers
+      - name: Ensure zap-scripts folder exists
+        run: mkdir -p zap-scripts
+
+      - name: Copy auth-header.py into container scripts directory
+        run: cp zap-scripts/auth-header.py zap-scripts/auth-header.py
+
+      - name: Run ZAP API Scan WITH Authentication Header
         run: |
           docker run --rm \
             -v "$(pwd)":/zap/wrk \
@@ -28,18 +34,19 @@ jobs:
             python3 /zap/zap-api-scan.py \
               -t "https://demo.testfire.net/swagger/properties.json" \
               -f openapi \
-              --hook=/zap/scripts/auth-header.js \
+              --hook=/zap/scripts/auth-header.py \
+              -I \
               -d \
               -r /zap/wrk/zap-output/zap-report.html \
               -J /zap/wrk/zap-output/zap-report.json
 
-      - name: Upload HTML report
+      - name: Upload HTML Report
         uses: actions/upload-artifact@v4
         with:
           name: zap-html-report
           path: zap-output/zap-report.html
 
-      - name: Upload JSON report
+      - name: Upload JSON Report
         uses: actions/upload-artifact@v4
         with:
           name: zap-json-report
